@@ -327,15 +327,7 @@ app.patch('/api/admin/empleados/:cedula', requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
-app.delete('/api/admin/empleados/:cedula', requireAdmin, async (req, res) => {
-  const { rows } = await pool.query('SELECT pdf_path FROM empleados WHERE cedula=$1', [normalizeCedula(req.params.cedula)]);
-  const employee = rows[0];
-  if (!employee) return res.status(404).json({ error: 'Empleado no encontrado.' });
-  if (employee.pdf_path) fs.rmSync(path.join(DATA_DIR, employee.pdf_path), { force: true });
-  await pool.query('DELETE FROM empleados WHERE cedula=$1', [normalizeCedula(req.params.cedula)]);
-  await audit('admin', 'ELIMINAR_EMPLEADO', req.params.cedula);
-  res.json({ ok: true });
-});
+
 
 const upload = multer({ dest: path.join(DATA_DIR, 'temp'), limits: { fileSize: config.maxFileBytes }, fileFilter: (_, file, cb) => cb(null, /\.(csv|xlsx|xls)$/i.test(file.originalname)) });
 
