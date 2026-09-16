@@ -121,7 +121,11 @@ async function importWorkbook(filePath) {
       }
     }
     await client.query('COMMIT');
-  } catch (_) { await client.query('ROLLBACK'); } finally { client.release(); }
+    console.log(`[importWorkbook] COMMIT exitoso: ${imported} insertados, ${skipped} omitidos`);
+  } catch (error) {
+    console.error(`[importWorkbook] Error: ${error.message}`);
+    await client.query('ROLLBACK');
+  } finally { client.release(); }
   return { imported, skipped, source: path.basename(filePath) };
 }
 
@@ -237,6 +241,7 @@ async function createPdf(employee) {
 }
 
 const app = express();
+app.set('trust proxy', 1);
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(session({ secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'), resave: false, saveUninitialized: false, cookie: { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 8 * 60 * 60 * 1000 } }));
