@@ -151,7 +151,7 @@ async function createPdf(employee) {
   page.drawText('Página 1 de 1', { x: W - 76, y: 30, size: 9, font: regular, color: ink });
 
   const headTop = 820, headBottom = 736;
-  const colLogoX = margin, colTitleX = margin + 160, colCtrlX = W - margin - 120, colEnd = W - margin;
+  const colLogoX = margin, colTitleX = margin + 140, colCtrlX = W - margin - 120, colEnd = W - margin;
   page.drawRectangle({ x: colLogoX, y: headBottom, width: colEnd - colLogoX, height: headTop - headBottom, borderColor: ink, borderWidth: 1 });
   page.drawLine({ start: { x: colTitleX, y: headBottom }, end: { x: colTitleX, y: headTop }, thickness: 1, color: ink });
   page.drawLine({ start: { x: colCtrlX, y: headBottom }, end: { x: colCtrlX, y: headTop }, thickness: 1, color: ink });
@@ -163,13 +163,13 @@ async function createPdf(employee) {
   page.drawText('08/SEP/2026', { x: colCtrlX + 10, y: headTop - 17 - filaH * 3, size: 8.5, font: regular, color: ink });
   try {
     const logo = await pdf.embedPng(fs.readFileSync(path.join(ROOT, 'public', 'logo-cedenar-nuevo.png')));
-    const logoW = 150, logoH = logoW * (468 / 2048);
-    page.drawImage(logo, { x: colLogoX + (160 - logoW) / 2, y: headBottom + (84 - logoH) / 2, width: logoW, height: logoH });
+    const logoW = 130, logoH = logoW * (468 / 2048);
+    page.drawImage(logo, { x: colLogoX + (140 - logoW) / 2, y: headBottom + (84 - logoH) / 2, width: logoW, height: logoH });
   } catch (_) {}
   const titleLines = ['AUTORIZACIÓN PARA EL TRATAMIENTO DE', 'DATOS PERSONALES BIOMÉTRICOS PARA', 'INGRESO A LAS INSTALACIONES'];
   const titleWidth = colCtrlX - colTitleX;
   titleLines.forEach((line, i) => {
-    const size = 10.5;
+    const size = 10;
     const tw = bold.widthOfTextAtSize(line, size);
     page.drawText(line, { x: colTitleX + (titleWidth - tw) / 2, y: 800 - i * 20, size, font: bold, color: azul });
   });
