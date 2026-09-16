@@ -332,6 +332,17 @@ app.patch('/api/admin/empleados/:cedula', requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
+app.patch('/api/admin/empleados/:cedula/reset-pdf', requireAdmin, async (req, res) => {
+  const cedula = normalizeCedula(req.params.cedula);
+  const { rows } = await pool.query('SELECT pdf_path FROM empleados WHERE cedula=$1', [cedula]);
+  const employee = rows[0];
+  if (!employee) return res.status(404).json({ error: 'Empleado no encontrado.' });
+  if (employee.pdf_path) fs.rmSync(path.join(DATA_DIR, employee.pdf_path), { force: true });
+  await pool.query(`UPDATE empleados SET estado='PENDIENTE', fecha_autorizacion=NULL, firma=NULL, autorizacion_aceptada=0, version_autorizacion=NULL, pdf_path=NULL, updated_at=$1 WHERE cedula=$2`, [now(), cedula]);
+  await audit('admin', 'RESET_PDF', cedula);
+  res.json({ ok: true });
+});
+
 
 
 const upload = multer({ dest: path.join(DATA_DIR, 'temp'), limits: { fileSize: config.maxFileBytes }, fileFilter: (_, file, cb) => cb(null, /\.(csv|xlsx|xls)$/i.test(file.originalname)) });
