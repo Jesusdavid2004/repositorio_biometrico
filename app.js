@@ -181,22 +181,79 @@ async function createPdf(employee) {
   const ciudad = clean(employee.ciudad) || '______________________';
   const lineHeight = 14.5;
   let y = 706;
-  const drawSegment = (text, x, yy, font, size, color) => { page.drawText(text, { x, y: yy, size, font, color }); return x + font.widthOfTextAtSize(text, size); };
-  const writeRich = (segments, size) => {
-    let x = margin;
+  
+  const buildLines = (segments, size, maxWidth) => {
+    const lines = [];
+    let currentLine = [];
+    let currentWidth = 0;
+    const spaceWidth = regular.widthOfTextAtSize(' ', size);
+    
     for (const seg of segments) {
-      const words = seg.text.split(/(\s+)/);
+      const words = seg.text.split(/(\s+)/).filter(w => w);
       for (const word of words) {
-        if (!word) continue;
-        const ww = seg.font.widthOfTextAtSize(word, size);
-        if (x + ww > W - margin && word.trim()) { x = margin; y -= lineHeight; }
-        x = drawSegment(word, x, y, seg.font, size, seg.color || ink);
-        if (seg.underline && word.trim()) page.drawLine({ start: { x: x - ww, y: y - 2 }, end: { x, y: y - 2 }, thickness: 0.8, color: ink });
+        const wordWidth = seg.font.widthOfTextAtSize(word, size);
+        
+        if (currentWidth + wordWidth > maxWidth && currentLine.length > 0) {
+          lines.push(currentLine);
+          currentLine = [];
+          currentWidth = 0;
+        }
+        
+        if (word.trim()) {
+          currentLine.push({ word, font: seg.font, color: seg.color || ink, underline: seg.underline, width: wordWidth });
+          currentWidth += wordWidth + spaceWidth;
+        }
       }
     }
-    y -= lineHeight + 6;
+    
+    if (currentLine.length > 0) lines.push(currentLine);
+    return lines;
   };
-  writeRich([
+  
+  const drawJustifiedLine = (line, x, y, maxWidth, isLastLine) => {
+    if (line.length === 0) return;
+    
+    const spaceWidth = regular.widthOfTextAtSize(' ', 10.5);
+    const totalWordWidth = line.reduce((sum, item) => sum + item.width, 0);
+    const extraSpace = maxWidth - totalWordWidth;
+    
+    if (isLastLine || line.length === 1) {
+      let currentX = x;
+      for (const item of line) {
+        page.drawText(item.word, { x: currentX, y, size: 10.5, font: item.font, color: item.color });
+        if (item.underline) {
+          page.drawLine({ start: { x: currentX, y: y - 2 }, end: { x: currentX + item.width, y: y - 2 }, thickness: 0.8, color: ink });
+        }
+        currentX += item.width + spaceWidth;
+      }
+    } else {
+      const gaps = line.length - 1;
+      const spacePerGap = extraSpace / gaps;
+      let currentX = x;
+      
+      for (let i = 0; i < line.length; i++) {
+        const item = line[i];
+        page.drawText(item.word, { x: currentX, y, size: 10.5, font: item.font, color: item.color });
+        if (item.underline) {
+          page.drawLine({ start: { x: currentX, y: y - 2 }, end: { x: currentX + item.width, y: y - 2 }, thickness: 0.8, color: ink });
+        }
+        currentX += item.width + spaceWidth + spacePerGap;
+      }
+    }
+  };
+  
+  const writeJustified = (segments, size) => {
+    const maxWidth = W - margin * 2;
+    const lines = buildLines(segments, size, maxWidth);
+    
+    for (let i = 0; i < lines.length; i++) {
+      const isLastLine = i === lines.length - 1;
+      drawJustifiedLine(lines[i], margin, y, maxWidth, isLastLine);
+      y -= lineHeight;
+    }
+    y -= 6;
+  };
+  writeJustified([
     { text: 'Yo, ', font: regular },
     { text: employee.nombre + ' ', font: bold, underline: true },
     { text: 'identificado(a) con cédula de ciudadanía No. ', font: regular },
@@ -208,7 +265,7 @@ async function createPdf(employee) {
     { text: ', ubicada en la Calle 20 No. 36 - 12, Avenida de los Estudiantes de la ciudad de Pasto, para que recolecte, almacene, use, circule y/o suprima mis datos personales, que se capturan en este medio, incluyendo el tratamiento de datos sensibles, aun conociendo que no estoy obligado(a) a autorizarlo. Lo anterior con el fin de registrar y utilizar mi imagen para fines de identificación biométrica, que permitan controlar mi ingreso como trabajador a las oficinas de CEDENAR S.A. E.S.P; así como para las demás finalidades de la Política de Tratamiento de Información disponible en www.cedenar.com.co, la cual declaro conocer y aceptar, así como entender que en esta se especifican cuáles datos son sensibles.', font: regular }
   ], 10.5);
   y -= 4;
-  writeRich([
+  writeJustified([
     { text: 'Declaro conocer que, como titular, me asisten los derechos a conocer, actualizar y rectificar mis datos personales, así como a solicitar el cese de su tratamiento y dejar sin efecto el consentimiento previamente otorgado. Estos derechos los podré ejercer a través de los canales dispuestos por CEDENAR S.A. E.S.P. para la atención de requerimientos relacionados con el tratamiento de datos personales, en el correo electrónico ', font: regular },
     { text: config.privacyEmail, font: regular, color: azulOscuro },
     { text: ', en la línea de atención ', font: regular },
@@ -221,20 +278,31 @@ async function createPdf(employee) {
   y -= 10;
   page.drawText('Atentamente,', { x: margin, y, size: 10.5, font: regular, color: ink });
   y -= 46;
-  page.drawText('Firma:', { x: margin, y, size: 10.5, font: regular, color: ink });
+  
+  const firmaLabelX = margin;
+  const nombreLabelX = margin;
+  const cedulaLabelX = margin;
+  const fieldValueX = margin + 60;
+  const lineEndX = margin + 280;
+  
+  page.drawText('Firma:', { x: firmaLabelX, y, size: 10.5, font: regular, color: ink });
   if (employee.firma && employee.firma.startsWith('data:image/png;base64,')) {
-    try { const image = await pdf.embedPng(Buffer.from(employee.firma.split(',')[1], 'base64')); page.drawImage(image, { x: margin + 46, y: y - 14, width: 200, height: 56 }); } catch (_) {}
+    try { 
+      const image = await pdf.embedPng(Buffer.from(employee.firma.split(',')[1], 'base64')); 
+      page.drawImage(image, { x: fieldValueX, y: y - 14, width: 200, height: 56 }); 
+    } catch (_) {}
   }
-  page.drawLine({ start: { x: margin, y: y - 18 }, end: { x: margin + 250, y: y - 18 }, thickness: 0.8, color: ink });
+  page.drawLine({ start: { x: fieldValueX, y: y - 18 }, end: { x: lineEndX, y: y - 18 }, thickness: 0.8, color: ink });
+  
   y -= 42;
-  page.drawText('Nombre: ', { x: margin, y, size: 10.5, font: regular, color: ink });
-  let nx = margin + regular.widthOfTextAtSize('Nombre: ', 10.5);
-  nx = drawSegment(employee.nombre, nx, y, bold, 10.5, ink);
-  page.drawLine({ start: { x: margin + 52, y: y - 3 }, end: { x: margin + 250, y: y - 3 }, thickness: 0.8, color: ink });
+  page.drawText('Nombre:', { x: nombreLabelX, y, size: 10.5, font: regular, color: ink });
+  page.drawText(employee.nombre, { x: fieldValueX, y, size: 10.5, font: bold, color: ink });
+  page.drawLine({ start: { x: fieldValueX, y: y - 3 }, end: { x: lineEndX, y: y - 3 }, thickness: 0.8, color: ink });
+  
   y -= 26;
-  page.drawText('C.C. No.: ', { x: margin, y, size: 10.5, font: regular, color: ink });
-  drawSegment(employee.cedula, margin + regular.widthOfTextAtSize('C.C. No.: ', 10.5), y, bold, 10.5, ink);
-  page.drawLine({ start: { x: margin + 52, y: y - 3 }, end: { x: margin + 250, y: y - 3 }, thickness: 0.8, color: ink });
+  page.drawText('C.C. No.:', { x: cedulaLabelX, y, size: 10.5, font: regular, color: ink });
+  page.drawText(employee.cedula, { x: fieldValueX, y, size: 10.5, font: bold, color: ink });
+  page.drawLine({ start: { x: fieldValueX, y: y - 3 }, end: { x: lineEndX, y: y - 3 }, thickness: 0.8, color: ink });
 
   const notaTexto = `Registro digital: ${employee.fecha_autorizacion || colombiaDate()} · Versión del formato: FOR-GDA-GHU-019 v1.0 · Este documento constituye evidencia del consentimiento registrado en la plataforma.`;
   page.drawText(notaTexto, { x: margin, y: 90, size: 7, font: regular, color: gris, maxWidth: contentWidth });
