@@ -46,6 +46,12 @@ input:focus{outline:none;border-color:var(--teal)}
 .legal-document u{text-decoration-thickness:1.5px;text-underline-offset:2px}
 .city-field{margin:16px 0 20px}
 .city-field input{width:100%;max-width:320px}
+.city-field label{display:flex;align-items:center;font-weight:600;color:var(--teal);font-size:1rem;margin-bottom:10px}
+.city-field label svg{flex-shrink:0}
+.city-field input{font-size:1.05rem;padding:14px 16px;border:2px solid var(--line);border-radius:8px;background:#fff;transition:all .2s}
+.city-field input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,102,204,.1)}
+.city-field input::placeholder{color:#94a3b8;font-size:.95rem}
+.field-hint{display:block;margin-top:8px;font-size:.8rem;color:var(--muted);font-style:italic}
 .consent-check{display:flex;gap:12px;align-items:flex-start;margin:20px 0;cursor:pointer}
 .consent-check input{margin-top:4px;width:18px;height:18px;cursor:pointer}
 .consent-check span{font-size:.875rem;line-height:1.6;color:var(--ink)}
