@@ -147,8 +147,10 @@ async function createPdf(employee) {
     page.drawImage(pie, { x: 0, y: 0, width: W, height: 74 });
   } catch (_) {}
   page.drawRectangle({ x: 0, y: 72, width: W, height: 3, color: rgb(0.95, 0.72, 0.02) });
-  page.drawText('Calle 20 N° 36 – 12 Av. Los estudiantes · Contact Center 115 · www.cedenar.com.co Pasto – Nariño – Colombia', { x: 0, y: 58, size: 9, font: bold, color: ink, maxWidth: W - 100 });
-  page.drawText('Página 1 de 1', { x: W - 76, y: 30, size: 9, font: regular, color: ink });
+  const pieText = 'Calle 20 N° 36 – 12 Av. Los estudiantes · Contact Center 115 · www.cedenar.com.co Pasto – Nariño – Colombia';
+  const pieTw = bold.widthOfTextAtSize(pieText, 8);
+  page.drawText(pieText, { x: (W - pieTw) / 2, y: 56, size: 8, font: bold, color: ink });
+  page.drawText('Página 1 de 1', { x: W - 80, y: 32, size: 8, font: regular, color: ink });
 
   const headTop = 820, headBottom = 736;
   const colLogoX = margin, colTitleX = margin + 140, colCtrlX = W - margin - 120, colEnd = W - margin;
@@ -168,10 +170,12 @@ async function createPdf(employee) {
   } catch (_) {}
   const titleLines = ['AUTORIZACIÓN PARA EL TRATAMIENTO DE', 'DATOS PERSONALES BIOMÉTRICOS PARA', 'INGRESO A LAS INSTALACIONES'];
   const titleWidth = colCtrlX - colTitleX;
+  const titleBlockH = titleLines.length * 16;
+  const titleStartY = headBottom + (headTop - headBottom + titleBlockH) / 2 - 6;
   titleLines.forEach((line, i) => {
     const size = 10;
     const tw = bold.widthOfTextAtSize(line, size);
-    page.drawText(line, { x: colTitleX + (titleWidth - tw) / 2, y: 800 - i * 20, size, font: bold, color: azul });
+    page.drawText(line, { x: colTitleX + (titleWidth - tw) / 2, y: titleStartY - i * 16, size, font: bold, color: azul });
   });
 
   const ciudad = clean(employee.ciudad) || '______________________';
@@ -232,7 +236,8 @@ async function createPdf(employee) {
   drawSegment(employee.cedula, margin + regular.widthOfTextAtSize('C.C. No.: ', 10.5), y, bold, 10.5, ink);
   page.drawLine({ start: { x: margin + 52, y: y - 3 }, end: { x: margin + 250, y: y - 3 }, thickness: 0.8, color: ink });
 
-  page.drawText(`Registro digital: ${employee.fecha_autorizacion || colombiaDate()} · Versión del formato: FOR-GDA-GHU-019 v1.0 · Este documento constituye evidencia del consentimiento registrado en la plataforma.`, { x: margin, y: 92, size: 7, font: regular, color: gris, maxWidth: contentWidth });
+  const notaTexto = `Registro digital: ${employee.fecha_autorizacion || colombiaDate()} · Versión del formato: FOR-GDA-GHU-019 v1.0 · Este documento constituye evidencia del consentimiento registrado en la plataforma.`;
+  page.drawText(notaTexto, { x: margin, y: 90, size: 7, font: regular, color: gris, maxWidth: contentWidth });
   const bytes = await pdf.save();
   const filename = `autorizacion_biometrica_${employee.cedula}_${normalizeName(employee.nombre) || 'trabajador'}.pdf`;
   const relative = path.join('uploads', filename);
