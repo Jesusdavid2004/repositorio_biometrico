@@ -132,46 +132,103 @@ async function createPdf(employee) {
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const page = pdf.addPage([595.28, 841.89]);
-  const margin = 48;
-  const width = page.getWidth() - margin * 2;
-  let y = 790;
-  const draw = (text, size = 10, font = regular, color = rgb(0.12, 0.16, 0.2)) => { page.drawText(text, { x: margin, y, size, font, color, maxWidth: width, lineHeight: size * 1.35 }); y -= size * 1.6; };
-  const wrap = (text, size = 10, font = regular) => {
-    const words = text.split(/\s+/); let line = '';
-    for (const word of words) {
-      const candidate = line ? `${line} ${word}` : word;
-      if (font.widthOfTextAtSize(candidate, size) > width && line) { draw(line, size, font); line = word; } else line = candidate;
+  const W = page.getWidth();
+  const margin = 56;
+  const contentWidth = W - margin * 2;
+  const azul = rgb(0, 0.31, 0.64);
+  const azulOscuro = rgb(0, 0.23, 0.46);
+  const gris = rgb(0.42, 0.47, 0.51);
+  const ink = rgb(0.13, 0.13, 0.15);
+
+  // Pie institucional: ondas + linea dorada + direccion
+  try {
+    const pie = await pdf.embedPng(fs.readFileSync(path.join(ROOT, 'public', 'pie-ondas.png')));
+    page.drawImage(pie, { x: 0, y: 0, width: W, height: 74 });
+  } catch (_) { /* sin pie grafico */ }
+  page.drawRectangle({ x: 0, y: 72, width: W, height: 3, color: rgb(0.95, 0.72, 0.02) });
+  page.drawText('Calle 20 N° 36 – 12 Av. Los estudiantes · Contact Center 115 · www.cedenar.com.co Pasto – Nariño – Colombia', { x: 0, y: 58, size: 9, font: bold, color: ink, maxWidth: W - 100 });
+  page.drawText('Página 1 de 1', { x: W - 76, y: 30, size: 9, font: regular, color: ink });
+
+  // Encabezado: logo + titulo + tabla de control
+  try {
+    const logo = await pdf.embedPng(fs.readFileSync(path.join(ROOT, 'public', 'logo-oficial.png')));
+    const logoH = 78, logoW = logoH * (441 / 214);
+    page.drawImage(logo, { x: margin - 8, y: 742, width: logoW, height: logoH });
+  } catch (_) { /* sin logo */ }
+  const tx = margin + 118;
+  page.drawText('AUTORIZACIÓN PARA EL TRATAMIENTO DE', { x: tx, y: 800, size: 12.5, font: bold, color: azul });
+  page.drawText('DATOS PERSONALES BIOMÉTRICOS PARA', { x: tx, y: 782, size: 12.5, font: bold, color: azul });
+  page.drawText('INGRESO A LAS INSTALACIONES', { x: tx, y: 764, size: 12.5, font: bold, color: azul });
+  const tabX = W - margin - 108;
+  page.drawText('FOR-GDA-GHU-019', { x: tabX, y: 800, size: 9.5, font: bold, color: ink });
+  page.drawText('VERSIÓN: 1.0', { x: tabX, y: 784, size: 9.5, font: regular, color: ink });
+  page.drawText('08/SEP/2026', { x: tabX, y: 768, size: 9.5, font: regular, color: ink });
+  page.drawLine({ start: { x: tabX, y: 776 }, end: { x: tabX + 108, y: 776 }, thickness: 0.7, color: ink });
+  page.drawLine({ start: { x: tabX, y: 760 }, end: { x: tabX + 108, y: 760 }, thickness: 0.7, color: ink });
+  page.drawLine({ start: { x: margin, y: 736 }, end: { x: W - margin, y: 736 }, thickness: 0.7, color: ink });
+
+  // Cuerpo: texto del formato con campos diligenciados subrayados
+  const ciudad = clean(employee.ciudad) || '______________________';
+  const lineHeight = 14.5;
+  let y = 700;
+  const drawSegment = (text, x, yy, font, size, color) => { page.drawText(text, { x, y: yy, size, font, color }); return x + font.widthOfTextAtSize(text, size); };
+  const writeRich = (segments, size) => {
+    let x = margin;
+    for (const seg of segments) {
+      const words = seg.text.split(/(\s+)/);
+      for (const word of words) {
+        if (!word) continue;
+        const ww = seg.font.widthOfTextAtSize(word, size);
+        if (x + ww > W - margin && word.trim()) { x = margin; y -= lineHeight; }
+        x = drawSegment(word, x, y, seg.font, size, seg.color || ink);
+        if (seg.underline && word.trim()) page.drawLine({ start: { x: x - ww, y: y - 2 }, end: { x, y: y - 2 }, thickness: 0.8, color: ink });
+      }
     }
-    if (line) draw(line, size, font);
-    y -= 3;
+    y -= lineHeight + 6;
   };
-  page.drawRectangle({ x: margin, y: 760, width, height: 58, borderColor: rgb(0, 0.31, 0.64), borderWidth: 1 });
-  page.drawText(config.reason, { x: margin + 16, y: 790, size: 12, font: bold, color: rgb(0, 0.31, 0.64), maxWidth: width - 32 });
-  page.drawText(`NIT ${config.nit}  |  Constancia de consentimiento`, { x: margin + 16, y: 774, size: 9, font: regular, color: rgb(0.35, 0.44, 0.51) });
-  y = 724;
-  wrap('AUTORIZACIÓN REGISTRO BIOMÉTRICO PARA INGRESO A INSTALACIONES', 13, bold);
-  y -= 6;
-  for (const paragraph of authorizationText(employee).split('\n\n')) wrap(paragraph, 10, regular);
+  writeRich([
+    { text: 'Yo, ', font: regular },
+  { text: employee.nombre + ' ', font: bold, underline: true },
+    { text: 'identificado(a) con cédula de ciudadanía No. ', font: regular },
+    { text: employee.cedula + ' ', font: bold, underline: true },
+    { text: 'de la ciudad de ', font: regular },
+    { text: ciudad + ' ', font: bold, underline: true },
+    { text: ', autorizo a las ', font: regular },
+    { text: 'CENTRALES ELÉCTRICAS DE NARIÑO S.A. E.S.P. - CEDENAR S.A. E.S.P.', font: bold },
+    { text: ', ubicada en la Calle 20 No. 36 - 12, Avenida de los Estudiantes de la ciudad de Pasto, para que recolecte, almacene, use, circule y/o suprima mis datos personales, que se capturan en este medio, incluyendo el tratamiento de datos sensibles, aun conociendo que no estoy obligado(a) a autorizarlo. Lo anterior con el fin de registrar y utilizar mi imagen para fines de identificación biométrica, que permitan controlar mi ingreso como trabajador a las oficinas de CEDENAR S.A. E.S.P; así como para las demás finalidades de la Política de Tratamiento de Información disponible en www.cedenar.com.co, la cual declaro conocer y aceptar, así como entender que en esta se especifican cuáles datos son sensibles.', font: regular }
+  ], 10.5);
   y -= 4;
-  draw('Atentamente,', 10, regular);
-  y -= 32;
-  page.drawText('Firma:', { x: margin, y, size: 10, font: bold });
-  page.drawLine({ start: { x: margin + 46, y: y - 3 }, end: { x: margin + 268, y: y - 3 }, thickness: 0.8, color: rgb(0.12, 0.16, 0.2) });
+  writeRich([
+    { text: 'Declaro conocer que, como titular, me asisten los derechos a conocer, actualizar y rectificar mis datos personales, así como a solicitar el cese de su tratamiento y dejar sin efecto el consentimiento previamente otorgado. Estos derechos los podré ejercer a través de los canales dispuestos por CEDENAR S.A. E.S.P. para la atención de requerimientos relacionados con el tratamiento de datos personales, en el correo electrónico ', font: regular },
+    { text: config.privacyEmail, font: regular, color: azulOscuro },
+    { text: ', en la línea de atención ', font: regular },
+    { text: config.phone, font: regular, color: azulOscuro },
+    { text: ' o a través de la página web ', font: regular },
+    { text: 'www.cedenar.com.co', font: regular, color: azulOscuro },
+    { text: '.', font: regular }
+  ], 10.5);
+
+  // Bloque de firma como en el formato
+  y -= 10;
+  page.drawText('Atentamente,', { x: margin, y, size: 10.5, font: regular, color: ink });
+  y -= 46;
+  page.drawText('Firma:', { x: margin, y, size: 10.5, font: regular, color: ink });
   if (employee.firma && employee.firma.startsWith('data:image/png;base64,')) {
-    try { const image = await pdf.embedPng(Buffer.from(employee.firma.split(',')[1], 'base64')); page.drawImage(image, { x: margin + 50, y: y - 2, width: 190, height: 54 }); } catch (_) { /* La evidencia de la firma queda en la base de datos. */ }
+    try { const image = await pdf.embedPng(Buffer.from(employee.firma.split(',')[1], 'base64')); page.drawImage(image, { x: margin + 46, y: y - 14, width: 200, height: 56 }); } catch (_) { /* evidencia conservada en base */ }
   }
-  y -= 30;
-  page.drawText('Nombre:', { x: margin, y, size: 10, font: regular });
-  page.drawText(employee.nombre, { x: margin + 52, y, size: 10, font: bold, maxWidth: 210 });
-  page.drawLine({ start: { x: margin + 52, y: y - 3 }, end: { x: margin + 268, y: y - 3 }, thickness: 0.8, color: rgb(0.12, 0.16, 0.2) });
-  y -= 24;
-  page.drawText('C.C. No.:', { x: margin, y, size: 10, font: regular });
-  page.drawText(employee.cedula, { x: margin + 52, y, size: 10, font: bold });
-  page.drawLine({ start: { x: margin + 52, y: y - 3 }, end: { x: margin + 268, y: y - 3 }, thickness: 0.8, color: rgb(0.12, 0.16, 0.2) });
+  page.drawLine({ start: { x: margin, y: y - 18 }, end: { x: margin + 250, y: y - 18 }, thickness: 0.8, color: ink });
+  y -= 42;
+  page.drawText('Nombre: ', { x: margin, y, size: 10.5, font: regular, color: ink });
+  let nx = margin + regular.widthOfTextAtSize('Nombre: ', 10.5);
+  nx = drawSegment(employee.nombre, nx, y, bold, 10.5, ink);
+  page.drawLine({ start: { x: margin + 52, y: y - 3 }, end: { x: margin + 250, y: y - 3 }, thickness: 0.8, color: ink });
   y -= 26;
-  draw(`Cargo: ${employee.cargo || 'No registrado'}    Dependencia: ${employee.dependencia || 'No registrada'}`, 9, regular);
-  draw(`Fecha y hora de aceptación: ${employee.fecha_autorizacion || colombiaDate()}    Versión del formato: ${config.policyVersion}`, 9, regular);
-  page.drawText('Este documento constituye evidencia del consentimiento registrado en la plataforma.', { x: margin, y: 28, size: 8, font: regular, color: rgb(0.25, 0.3, 0.34), maxWidth: width });
+  page.drawText('C.C. No.: ', { x: margin, y, size: 10.5, font: regular, color: ink });
+  drawSegment(employee.cedula, margin + regular.widthOfTextAtSize('C.C. No.: ', 10.5), y, bold, 10.5, ink);
+  page.drawLine({ start: { x: margin + 52, y: y - 3 }, end: { x: margin + 250, y: y - 3 }, thickness: 0.8, color: ink });
+
+  // Nota de evidencia sobre la barra del pie
+  page.drawText(`Registro digital: ${employee.fecha_autorizacion || colombiaDate()} · Versión del formato: FOR-GDA-GHU-019 v1.0 · Este documento constituye evidencia del consentimiento registrado en la plataforma.`, { x: margin, y: 92, size: 7, font: regular, color: gris, maxWidth: contentWidth });
   const bytes = await pdf.save();
   const filename = `autorizacion_biometrica_${employee.cedula}_${normalizeName(employee.nombre) || 'trabajador'}.pdf`;
   const relative = path.join('uploads', filename);
