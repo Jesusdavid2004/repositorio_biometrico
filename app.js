@@ -149,28 +149,38 @@ async function createPdf(employee) {
   page.drawText('Calle 20 N° 36 – 12 Av. Los estudiantes · Contact Center 115 · www.cedenar.com.co Pasto – Nariño – Colombia', { x: 0, y: 58, size: 9, font: bold, color: ink, maxWidth: W - 100 });
   page.drawText('Página 1 de 1', { x: W - 76, y: 30, size: 9, font: regular, color: ink });
 
-  // Encabezado: logo + titulo + tabla de control
+  // Encabezado: tabla de 3 columnas (logo | titulo centrado | control), con bordes como el formato
+  const headTop = 820, headBottom = 736;
+  const colLogoX = margin, colTitleX = margin + 130, colCtrlX = W - margin - 120, colEnd = W - margin;
+  page.drawRectangle({ x: colLogoX, y: headBottom, width: colEnd - colLogoX, height: headTop - headBottom, borderColor: ink, borderWidth: 1 });
+  page.drawLine({ start: { x: colTitleX, y: headBottom }, end: { x: colTitleX, y: headTop }, thickness: 1, color: ink });
+  page.drawLine({ start: { x: colCtrlX, y: headBottom }, end: { x: colCtrlX, y: headTop }, thickness: 1, color: ink });
+  // Celdas de control (3 filas)
+  const filaH = (headTop - headBottom) / 4;
+  for (let i = 1; i < 4; i++) page.drawLine({ start: { x: colCtrlX, y: headBottom + filaH * i }, end: { x: colEnd, y: headBottom + filaH * i }, thickness: 1, color: ink });
+  page.drawText('Página 1 de 1', { x: colCtrlX + 10, y: headTop - 17, size: 8.5, font: regular, color: ink });
+  page.drawText('FOR-GDA-GHU-019', { x: colCtrlX + 10, y: headTop - 17 - filaH, size: 8.5, font: bold, color: ink });
+  page.drawText('VERSIÓN: 1.0', { x: colCtrlX + 10, y: headTop - 17 - filaH * 2, size: 8.5, font: regular, color: ink });
+  page.drawText('08/SEP/2026', { x: colCtrlX + 10, y: headTop - 17 - filaH * 3, size: 8.5, font: regular, color: ink });
+  // Logo dentro de la primera celda
   try {
     const logo = await pdf.embedPng(fs.readFileSync(path.join(ROOT, 'public', 'logo-oficial.png')));
-    const logoH = 78, logoW = logoH * (441 / 214);
-    page.drawImage(logo, { x: margin - 8, y: 742, width: logoW, height: logoH });
+    const logoW = 116, logoH = logoW * (214 / 441);
+    page.drawImage(logo, { x: colLogoX + (130 - logoW) / 2, y: headBottom + (84 - logoH) / 2, width: logoW, height: logoH });
   } catch (_) { /* sin logo */ }
-  const tx = margin + 118;
-  page.drawText('AUTORIZACIÓN PARA EL TRATAMIENTO DE', { x: tx, y: 800, size: 12.5, font: bold, color: azul });
-  page.drawText('DATOS PERSONALES BIOMÉTRICOS PARA', { x: tx, y: 782, size: 12.5, font: bold, color: azul });
-  page.drawText('INGRESO A LAS INSTALACIONES', { x: tx, y: 764, size: 12.5, font: bold, color: azul });
-  const tabX = W - margin - 108;
-  page.drawText('FOR-GDA-GHU-019', { x: tabX, y: 800, size: 9.5, font: bold, color: ink });
-  page.drawText('VERSIÓN: 1.0', { x: tabX, y: 784, size: 9.5, font: regular, color: ink });
-  page.drawText('08/SEP/2026', { x: tabX, y: 768, size: 9.5, font: regular, color: ink });
-  page.drawLine({ start: { x: tabX, y: 776 }, end: { x: tabX + 108, y: 776 }, thickness: 0.7, color: ink });
-  page.drawLine({ start: { x: tabX, y: 760 }, end: { x: tabX + 108, y: 760 }, thickness: 0.7, color: ink });
-  page.drawLine({ start: { x: margin, y: 736 }, end: { x: W - margin, y: 736 }, thickness: 0.7, color: ink });
+  // Titulo centrado en la celda del medio
+  const titleLines = ['AUTORIZACIÓN PARA EL TRATAMIENTO DE', 'DATOS PERSONALES BIOMÉTRICOS PARA', 'INGRESO A LAS INSTALACIONES'];
+  const titleWidth = colCtrlX - colTitleX;
+  titleLines.forEach((line, i) => {
+    const size = 11.5;
+    const tw = bold.widthOfTextAtSize(line, size);
+    page.drawText(line, { x: colTitleX + (titleWidth - tw) / 2, y: 800 - i * 20, size, font: bold, color: azul });
+  });
 
   // Cuerpo: texto del formato con campos diligenciados subrayados
   const ciudad = clean(employee.ciudad) || '______________________';
   const lineHeight = 14.5;
-  let y = 700;
+  let y = 706;
   const drawSegment = (text, x, yy, font, size, color) => { page.drawText(text, { x, y: yy, size, font, color }); return x + font.widthOfTextAtSize(text, size); };
   const writeRich = (segments, size) => {
     let x = margin;

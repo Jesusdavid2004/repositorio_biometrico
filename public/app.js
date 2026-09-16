@@ -19,7 +19,7 @@ function paintAuthorization() {
     <div class="fo-head">
       <img src="/logo-oficial.png" alt="CEDENAR" class="fo-logo">
       <div class="fo-titulo">AUTORIZACIÓN PARA EL TRATAMIENTO DE<br>DATOS PERSONALES BIOMÉTRICOS PARA<br>INGRESO A LAS INSTALACIONES</div>
-      <div class="fo-control"><strong>FOR-GDA-GHU-019</strong><span>VERSIÓN: 1.0</span><span>08/SEP/2026</span></div>
+      <div class="fo-control"><span>Página 1 de 1</span><strong>FOR-GDA-GHU-019</strong><span>VERSIÓN: 1.0</span><span>08/SEP/2026</span></div>
     </div>
     <div class="fo-cuerpo">
       <p>Yo, ${u(e.nombre)}, identificado(a) con cédula de ciudadanía No. ${u(e.cedula)} de la ciudad de ${ciudadHtml}, autorizo a las <strong>CENTRALES ELÉCTRICAS DE NARIÑO S.A. E.S.P. - CEDENAR S.A. E.S.P.</strong>, ubicada en la Calle 20 No. 36 - 12, Avenida de los Estudiantes de la ciudad de Pasto, para que recolecte, almacene, use, circule y/o suprima mis datos personales, que se capturan en este medio, incluyendo el tratamiento de datos sensibles, aun conociendo que no estoy obligado(a) a autorizarlo. Lo anterior con el fin de registrar y utilizar mi imagen para fines de identificación biométrica, que permitan controlar mi ingreso como trabajador a las oficinas de CEDENAR S.A. E.S.P; así como para las demás finalidades de la Política de Tratamiento de Información disponible en www.cedenar.com.co, la cual declaro conocer y aceptar, así como entender que en esta se especifican cuáles datos son sensibles.</p>
