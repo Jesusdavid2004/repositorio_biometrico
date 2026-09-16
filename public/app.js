@@ -16,22 +16,11 @@ function paintAuthorization() {
   const u = (t) => `<span class="campo">${escapeHtmlLocal(t)}</span>`;
   const ciudadHtml = ciudad ? u(ciudad) : '<span class="campo campo-vacio">______________________</span>';
   $('authorizationText').innerHTML = `
-    <div class="fo-head">
-      <img src="/logo-oficial.png" alt="CEDENAR" class="fo-logo">
-      <div class="fo-titulo">AUTORIZACIÓN PARA EL TRATAMIENTO DE<br>DATOS PERSONALES BIOMÉTRICOS PARA<br>INGRESO A LAS INSTALACIONES</div>
-      <div class="fo-control"><span>Página 1 de 1</span><strong>FOR-GDA-GHU-019</strong><span>VERSIÓN: 1.0</span><span>08/SEP/2026</span></div>
-    </div>
-    <div class="fo-cuerpo">
+    <div class="legal-document">
       <p>Yo, ${u(e.nombre)}, identificado(a) con cédula de ciudadanía No. ${u(e.cedula)} de la ciudad de ${ciudadHtml}, autorizo a las <strong>CENTRALES ELÉCTRICAS DE NARIÑO S.A. E.S.P. - CEDENAR S.A. E.S.P.</strong>, ubicada en la Calle 20 No. 36 - 12, Avenida de los Estudiantes de la ciudad de Pasto, para que recolecte, almacene, use, circule y/o suprima mis datos personales, que se capturan en este medio, incluyendo el tratamiento de datos sensibles, aun conociendo que no estoy obligado(a) a autorizarlo. Lo anterior con el fin de registrar y utilizar mi imagen para fines de identificación biométrica, que permitan controlar mi ingreso como trabajador a las oficinas de CEDENAR S.A. E.S.P; así como para las demás finalidades de la Política de Tratamiento de Información disponible en www.cedenar.com.co, la cual declaro conocer y aceptar, así como entender que en esta se especifican cuáles datos son sensibles.</p>
       <p>Declaro conocer que, como titular, me asisten los derechos a conocer, actualizar y rectificar mis datos personales, así como a solicitar el cese de su tratamiento y dejar sin efecto el consentimiento previamente otorgado. Estos derechos los podré ejercer a través de los canales dispuestos por CEDENAR S.A. E.S.P. para la atención de requerimientos relacionados con el tratamiento de datos personales, en el correo electrónico <span class="fo-link">consulta.protecciondatospersonales@cedenar.com.co</span>, en la línea de atención <span class="fo-link">602 7244321</span> o a través de la página web <span class="fo-link">www.cedenar.com.co</span>.</p>
       <p class="fo-atentamente">Atentamente,</p>
-      <div class="fo-firmas">
-        <div class="fo-fila"><span>Firma:</span><i id="foFirmaVista"></i></div>
-        <div class="fo-fila"><span>Nombre:</span><i>${u(e.nombre)}</i></div>
-        <div class="fo-fila"><span>C.C. No.:</span><i>${u(e.cedula)}</i></div>
-      </div>
-    </div>
-    <div class="fo-pie">Calle 20 N° 36 – 12 Av. Los estudiantes · Contact Center 115 · www.cedenar.com.co Pasto – Nariño – Colombia</div>`;
+    </div>`;
 }
 function renderEmployee(data) {
   state.employee = data;
