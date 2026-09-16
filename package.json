@@ -1,0 +1,27 @@
+{
+  "name": "autorizacion-biometrica",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema interno para registrar autorizaciones de tratamiento de datos biometricos.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.8.1",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.1",
+    "multer": "^1.4.5-lts.1",
+    "pdf-lib": "^1.17.1",
+    "qrcode": "^1.5.4",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}

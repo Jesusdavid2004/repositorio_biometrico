@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Autorización registro biométrico</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@5.0.4/dist/signature_pad.umd.min.js"></script>
+</head>
+<body class="public-page">
+  <main class="shell">
+    <header class="brand-header">
+      <img src="/logo-cedenar.svg" alt="CEDENAR - Centrales Eléctricas de Nariño" class="brand-logo">
+      <div><p class="eyebrow">Gestión interna de datos personales</p><h1>Autorización registro biométrico</h1></div>
+      <a href="/admin" class="quiet-link">Administración</a>
+    </header>
+    <section class="intro-band"><div><span class="section-number">01</span><h2>Diligenciamiento autorización tratamiento de datos – Registro biométrico</h2><p>Cordial saludo. En el marco de la implementación del nuevo sistema de registro biométrico de CEDENAR S.A. E.S.P., y con el fin de adelantar de manera organizada el registro de todo el personal, se ha dispuesto este formulario correspondiente al tratamiento de datos personales asociado a este proceso. Consulta tus datos, lee el documento completo y registra tu firma manuscrita desde este dispositivo.</p></div><div class="privacy-note"><strong>Datos sensibles</strong><span>Esta plataforma no captura ni almacena huellas, rostros ni plantillas biométricas. Solo registra tu autorización y tu firma.</span></div></section>
+    <section class="form-grid">
+      <form id="lookupForm" class="panel lookup-panel"><div class="panel-heading"><span class="step-tag">Paso 1</span><h2>Identificación</h2></div><label for="cedula">Número de cédula</label><div class="input-action"><input id="cedula" inputmode="numeric" autocomplete="off" required placeholder="Escribe tu cédula"><button class="button primary" type="submit">Consultar</button></div><p class="helper">Usa únicamente los números, sin puntos ni espacios.</p><div id="lookupMessage" class="message" role="alert"></div></form>
+      <section id="employeePanel" class="panel employee-panel hidden"><div class="panel-heading"><span class="step-tag">Paso 2</span><h2>Tus datos</h2></div><div class="employee-data"><div><span>Nombre completo</span><strong id="employeeName"></strong></div><div><span>Cédula</span><strong id="employeeCedula"></strong></div><div><span>Cargo</span><strong id="employeeCargo"></strong></div><div><span>Dependencia / área</span><strong id="employeeArea"></strong></div><div><span>Fecha de consulta</span><strong id="currentDate"></strong></div></div><div id="alreadyAuthorized" class="success-box hidden"></div></section>
+    </section>
+    <section id="authorizationPanel" class="panel document-panel hidden"><div class="panel-heading document-heading"><div><span class="step-tag">Paso 3</span><h2>Autorización registro biométrico para ingreso a instalaciones</h2></div><span id="versionLabel" class="version-label"></span></div><article id="authorizationText" class="legal-document"></article><div class="legal-reminder"><strong>Conoce tus derechos</strong><span>Puedes conocer, actualizar, rectificar o solicitar la supresión de tus datos, revocar la autorización cuando proceda y presentar consultas o reclamos ante el correo de protección de datos de la empresa.</span></div></section>
+    <section id="signaturePanel" class="panel signature-panel hidden"><div class="panel-heading"><div><span class="step-tag">Paso 4</span><h2>Firma y confirma</h2></div><span class="signature-status" id="signatureStatus">Firma pendiente</span></div><div class="city-field"><label for="ciudad">Ciudad (como aparecerá en la autorización)</label><input id="ciudad" maxlength="80" placeholder="Ejemplo: Pasto" autocomplete="address-level2"></div><label class="consent-check"><input type="checkbox" id="consent"><span>Declaro que he leído, comprendido y autorizo de manera previa, expresa, informada e inequívoca el tratamiento de mis datos personales, incluyendo datos sensibles, en los términos descritos en el documento anterior.</span></label><div class="signature-wrap"><canvas id="signatureCanvas"></canvas><div class="signature-line"></div><span>Firma manuscrita del trabajador</span></div><div class="signature-actions"><button type="button" id="clearSignature" class="button secondary">Limpiar firma</button><button type="button" id="saveAuthorization" class="button primary">Guardar autorización</button></div><div id="saveMessage" class="message" role="alert"></div></section>
+    <section id="confirmation" class="confirmation hidden"><div class="confirmation-icon">✓</div><div><span class="eyebrow">Registro completado</span><h2>Tu autorización sí quedó guardada.</h2><p id="confirmationText"></p><a id="downloadLink" class="button primary" href="#">Descargar constancia PDF</a></div></section>
+    <footer><span>Autorización versionada y verificable</span><span>Revisión jurídica y de protección de datos pendiente de aprobación institucional</span></footer>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
